@@ -7,8 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, TodoItem } from "@/services/api";
-import { Link } from "react-router-dom";
-import { BookOpen, Plus, Trash2, ArrowUp, ArrowDown, Star } from "lucide-react";
+import { Plus, Trash2, ArrowUp, ArrowDown, Star } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -104,12 +103,6 @@ const Dashboard = () => {
             Welcome, {user?.name}!
           </h1>
           <div className="space-x-4">
-            <Button variant="outline" asChild>
-              <Link to="/demonstration">
-                <BookOpen className="mr-2 h-4 w-4" />
-                Start Demonstration
-              </Link>
-            </Button>
             <Button variant="outline" onClick={logout}>
               Sign out
             </Button>
@@ -146,117 +139,113 @@ const Dashboard = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle>Task Management</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleAddTask} className="flex mb-6 gap-2">
-                <Input
-                  placeholder="Add a new task..."
-                  value={newTask}
-                  onChange={(e) => setNewTask(e.target.value)}
-                  className="flex-grow"
-                />
-                <Button type="submit" disabled={addTodoMutation.isPending}>
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add
-                </Button>
-              </form>
+        <Card>
+          <CardHeader>
+            <CardTitle>Task Management</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleAddTask} className="flex mb-6 gap-2">
+              <Input
+                placeholder="Add a new task..."
+                value={newTask}
+                onChange={(e) => setNewTask(e.target.value)}
+                className="flex-grow"
+              />
+              <Button type="submit" disabled={addTodoMutation.isPending}>
+                <Plus className="h-4 w-4 mr-1" />
+                Add
+              </Button>
+            </form>
 
-              {isLoading ? (
-                <div className="space-y-4">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="flex items-center space-x-2">
-                      <Skeleton className="h-5 w-5 rounded" />
-                      <Skeleton className="h-4 flex-grow" />
-                      <Skeleton className="h-8 w-8 rounded-full" />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
+            {isLoading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center space-x-2">
+                    <Skeleton className="h-5 w-5 rounded" />
+                    <Skeleton className="h-4 flex-grow" />
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Task</TableHead>
+                      <TableHead>Priority</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {data?.todos.length === 0 ? (
                       <TableRow>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Task</TableHead>
-                        <TableHead>Priority</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
+                        <TableCell
+                          colSpan={4}
+                          className="text-center text-muted-foreground"
+                        >
+                          No tasks yet. Add your first task above.
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {data?.todos.length === 0 ? (
-                        <TableRow>
+                    ) : (
+                      data?.todos.map((todo) => (
+                        <TableRow key={todo.id}>
+                          <TableCell>
+                            <Checkbox
+                              checked={todo.completed}
+                              onCheckedChange={() =>
+                                toggleTaskComplete(todo.id, todo.completed)
+                              }
+                            />
+                          </TableCell>
                           <TableCell
-                            colSpan={4}
-                            className="text-center text-muted-foreground"
+                            className={
+                              todo.completed ? "line-through text-gray-400" : ""
+                            }
                           >
-                            No tasks yet. Add your first task above.
+                            {todo.title}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex">
+                              {renderPriorityStars(todo.priority)}
+                            </div>
+                          </TableCell>
+                          <TableCell className="flex justify-end space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => changePriority(todo.id, "up")}
+                              disabled={todo.priority >= 5}
+                            >
+                              <ArrowUp className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => changePriority(todo.id, "down")}
+                              disabled={todo.priority <= 1}
+                            >
+                              <ArrowDown className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                              onClick={() => deleteTask(todo.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </TableCell>
                         </TableRow>
-                      ) : (
-                        data?.todos.map((todo) => (
-                          <TableRow key={todo.id}>
-                            <TableCell>
-                              <Checkbox
-                                checked={todo.completed}
-                                onCheckedChange={() =>
-                                  toggleTaskComplete(todo.id, todo.completed)
-                                }
-                              />
-                            </TableCell>
-                            <TableCell
-                              className={
-                                todo.completed
-                                  ? "line-through text-gray-400"
-                                  : ""
-                              }
-                            >
-                              {todo.title}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex">
-                                {renderPriorityStars(todo.priority)}
-                              </div>
-                            </TableCell>
-                            <TableCell className="flex justify-end space-x-2">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => changePriority(todo.id, "up")}
-                                disabled={todo.priority >= 5}
-                              >
-                                <ArrowUp className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => changePriority(todo.id, "down")}
-                                disabled={todo.priority <= 1}
-                              >
-                                <ArrowDown className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                                onClick={() => deleteTask(todo.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
